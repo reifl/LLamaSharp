@@ -2,17 +2,12 @@ name: Update Binaries
 
 on:
   workflow_dispatch:
-    inputs:
-      llama_cpp_commit:
-        description: 'Branch, tag, or commit to use for llama.cpp'
-        required: true
-        default: 'master'
   push:
     branches: [cron_job]
   #schedule:
   #  - cron: "22 22 * * 2"
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.inputs.llama_cpp_commit }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -51,15 +46,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
       - name: Build
         id: cmake_build
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} ${{ matrix.defines }}
+          cmake ../native ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} ${{ matrix.defines }}
           cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
           ls -R
       - uses: actions/upload-artifact@v4
@@ -86,6 +81,11 @@ jobs:
         with:
           path: ./build/bin/libmtmd.so
           name: mtmd-bin-linux-${{ matrix.build }}-${{ matrix.arch }}.so
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          path: ./build/bin/libllama-jinja.so
+          name: llama-jinja-bin-linux-${{ matrix.build }}-${{ matrix.arch }}.so
           if-no-files-found: error
 
   compile-musl:
@@ -116,15 +116,15 @@ jobs:
             g++
       - uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
       - name: Build
         id: cmake_build_musl
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} ${{ matrix.defines }}
+          cmake ../native ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} ${{ matrix.defines }}
           cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
           ls -R
       - uses: actions/upload-artifact@v4
@@ -152,6 +152,11 @@ jobs:
           path: ./build/bin/libmtmd.so
           name: mtmd-bin-musl-${{ matrix.build }}-x64.so
           if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          path: ./build/bin/libllama-jinja.so
+          name: llama-jinja-bin-musl-${{ matrix.build }}-x64.so
+          if-no-files-found: error
 
   compile-windows:
     name: Compile (Windows)
@@ -171,16 +176,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
 
       - name: Build
         id: cmake_build
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} ${{ matrix.defines }}
+          cmake ../native ${{ env.COMMON_DEFINE }} ${{ matrix.defines }}
           cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
           tree /f
 
@@ -214,6 +219,12 @@ jobs:
           path: .\build\bin\Release\mtmd.dll
           name: mtmd-bin-win-${{ matrix.build }}-x64.dll
           if-no-files-found: error
+      - name: Upload artifacts (llama-jinja)
+        uses: actions/upload-artifact@v4
+        with:
+          path: .\build\bin\Release\llama-jinja.dll
+          name: llama-jinja-bin-win-${{ matrix.build }}-x64.dll
+          if-no-files-found: error
 
   compile-windows-arm64:
     name: Compile (Windows ARM64)
@@ -227,16 +238,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
 
       - name: Build
         id: cmake_build
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} ${{ matrix.defines }}
+          cmake ../native ${{ env.COMMON_DEFINE }} ${{ matrix.defines }}
           cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
           tree /f
 
@@ -270,6 +281,12 @@ jobs:
           path: .\build\bin\Release\mtmd.dll
           name: mtmd-bin-win-${{ matrix.build }}-arm64.dll
           if-no-files-found: error
+      - name: Upload artifacts (llama-jinja)
+        uses: actions/upload-artifact@v4
+        with:
+          path: .\build\bin\Release\llama-jinja.dll
+          name: llama-jinja-bin-win-${{ matrix.build }}-arm64.dll
+          if-no-files-found: error
 
   compile-vulkan:
       name: Compile (vulkan) - ${{ matrix.os }}
@@ -288,9 +305,9 @@ jobs:
             id: checkout
             uses: actions/checkout@v4
             with:
-                repository: ggerganov/llama.cpp
-                fetch-depth: 0
-                ref: '${{ github.event.inputs.llama_cpp_commit }}'
+                repository: reifl/LLamaSharp
+                fetch-depth: 1
+                submodules: true
 
           - name: Download dependencies - Linux
             if: ${{ matrix.os == 'ubuntu-22.04' }}
@@ -313,7 +330,7 @@ jobs:
             run: |
                 mkdir build
                 cd build
-                cmake .. ${{ env.COMMON_DEFINE }} -DGGML_VULKAN=ON
+                cmake ../native ${{ env.COMMON_DEFINE }} -DGGML_VULKAN=ON
                 cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
                 ls -R
           - name: Build (Linux)
@@ -321,7 +338,7 @@ jobs:
             run: |
                 mkdir build
                 cd build
-                cmake .. ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} -DGGML_VULKAN=ON
+                cmake ../native ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} -DGGML_VULKAN=ON
                 cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
                 ls -R
           - name: Upload llama artifacts (Windows)
@@ -408,9 +425,9 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
 
       - uses: Jimver/cuda-toolkit@v0.2.15
         if: runner.os == 'Windows'
@@ -435,7 +452,7 @@ jobs:
           echo "CMAKE_CXX_FLAGS is $CMAKE_CXX_FLAGS"
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} -DGGML_CUDA=ON
+          cmake ../native ${{ env.COMMON_DEFINE }} -DGGML_CUDA=ON
           cmake --build . --config Release
           ls -R
 
@@ -446,7 +463,7 @@ jobs:
           echo "CMAKE_CXX_FLAGS is $CMAKE_CXX_FLAGS"
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} -DGGML_CUDA=ON
+          cmake ../native ${{ env.COMMON_DEFINE }} ${{ env.LINUX_RPATH_DEFINE }} -DGGML_CUDA=ON
           cmake --build . --config Release
           ls -R
 
@@ -540,9 +557,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
       - name: Dependencies
         continue-on-error: true
         run: |
@@ -552,7 +569,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.COMMON_DEFINE }} ${{ env.MACOS_RPATH_DEFINE }} ${{ matrix.defines }}
+          cmake ../native ${{ env.COMMON_DEFINE }} ${{ env.MACOS_RPATH_DEFINE }} ${{ matrix.defines }}
           cmake --build . --config Release -j ${env:NUMBER_OF_PROCESSORS}
           ls -R
       - name: Upload ggml
@@ -598,6 +615,13 @@ jobs:
           path: ./build/bin/libmtmd.dylib
           name: mtmd-bin-osx-${{ matrix.build }}.dylib
           if-no-files-found: error
+      - name: Upload llama-jinja
+        uses: actions/upload-artifact@v4
+        with:
+          path: ./build/bin/libllama-jinja.dylib
+          name: llama-jinja-bin-osx-${{ matrix.build }}.dylib
+          if-no-files-found: error
+
   compile-android:
     name: Compile (Android)
     strategy:
@@ -612,9 +636,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: ggerganov/llama.cpp
-          fetch-depth: 0
-          ref: '${{ github.event.inputs.llama_cpp_commit }}'
+          repository: reifl/LLamaSharp
+          fetch-depth: 1
+          submodules: true
       - uses: nttld/setup-ndk@v1
         id: setup-ndk
         with:
@@ -626,8 +650,8 @@ jobs:
           CMAKE_FLAGS: '-DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake -DANDROID_PLATFORM=android-23 -DGGML_OPENMP=OFF -DGGML_LLAMAFILE=OFF'
         run: |
           # export-lora not supported on 32 bit machines hence breaks x86 build
-          sed -i '/add_subdirectory(export-lora)/d' examples/CMakeLists.txt # remove export-lora from examples
-          cmake ${{ env.COMMON_DEFINE }} ${{ env.CMAKE_FLAGS }} ${{ matrix.defines }} -B build
+          sed -i '/add_subdirectory(export-lora)/d' llama.cpp/examples/CMakeLists.txt # remove export-lora from examples
+          cmake ${{ env.COMMON_DEFINE }} ${{ env.CMAKE_FLAGS }} ${{ matrix.defines }} -DLLAMA_BUILD_JINJA=OFF -B build native
           cmake --build build --config Release -j ${env:NUMBER_OF_PROCESSORS}
       - name: Upload Llama
         uses: actions/upload-artifact@v4
@@ -689,24 +713,28 @@ jobs:
           cp artifacts/ggml-cpu-bin-linux-noavx-x64.so/libggml-cpu.so   deps/noavx/libggml-cpu.so
           cp artifacts/llama-bin-linux-noavx-x64.so/libllama.so         deps/noavx/libllama.so
           cp artifacts/mtmd-bin-linux-noavx-x64.so/libmtmd.so           deps/noavx/libmtmd.so
+          cp artifacts/llama-jinja-bin-linux-noavx-x64.so/libllama-jinja.so deps/noavx/libllama-jinja.so
 
           cp artifacts/ggml-bin-linux-avx-x64.so/libggml.so             deps/avx/libggml.so
           cp artifacts/ggml-base-bin-linux-avx-x64.so/libggml-base.so   deps/avx/libggml-base.so
           cp artifacts/ggml-cpu-bin-linux-avx-x64.so/libggml-cpu.so     deps/avx/libggml-cpu.so
           cp artifacts/llama-bin-linux-avx-x64.so/libllama.so           deps/avx/libllama.so
           cp artifacts/mtmd-bin-linux-avx-x64.so/libmtmd.so             deps/avx/libmtmd.so
+          cp artifacts/llama-jinja-bin-linux-avx-x64.so/libllama-jinja.so deps/avx/libllama-jinja.so
 
           cp artifacts/ggml-bin-linux-avx2-x64.so/libggml.so            deps/avx2/libggml.so
           cp artifacts/ggml-base-bin-linux-avx2-x64.so/libggml-base.so  deps/avx2/libggml-base.so
           cp artifacts/ggml-cpu-bin-linux-avx2-x64.so/libggml-cpu.so    deps/avx2/libggml-cpu.so
           cp artifacts/llama-bin-linux-avx2-x64.so/libllama.so          deps/avx2/libllama.so
           cp artifacts/mtmd-bin-linux-avx2-x64.so/libmtmd.so            deps/avx2/libmtmd.so
+          cp artifacts/llama-jinja-bin-linux-avx2-x64.so/libllama-jinja.so deps/avx2/libllama-jinja.so
 
           cp artifacts/ggml-bin-linux-avx512-x64.so/libggml.so           deps/avx512/libggml.so
           cp artifacts/ggml-base-bin-linux-avx512-x64.so/libggml-base.so deps/avx512/libggml-base.so
           cp artifacts/ggml-cpu-bin-linux-avx512-x64.so/libggml-cpu.so   deps/avx512/libggml-cpu.so
           cp artifacts/llama-bin-linux-avx512-x64.so/libllama.so         deps/avx512/libllama.so
           cp artifacts/mtmd-bin-linux-avx512-x64.so/libmtmd.so           deps/avx512/libmtmd.so
+          cp artifacts/llama-jinja-bin-linux-avx512-x64.so/libllama-jinja.so deps/avx512/libllama-jinja.so
 
           # Arm64
           cp artifacts/ggml-bin-linux-aarch64-arm64.so/libggml.so           deps/linux-arm64/libggml.so
@@ -714,6 +742,7 @@ jobs:
           cp artifacts/ggml-cpu-bin-linux-aarch64-arm64.so/libggml-cpu.so   deps/linux-arm64/libggml-cpu.so
           cp artifacts/llama-bin-linux-aarch64-arm64.so/libllama.so         deps/linux-arm64/libllama.so
           cp artifacts/mtmd-bin-linux-aarch64-arm64.so/libmtmd.so           deps/linux-arm64/libmtmd.so
+          cp artifacts/llama-jinja-bin-linux-aarch64-arm64.so/libllama-jinja.so deps/linux-arm64/libllama-jinja.so
 
           # Musl
           cp artifacts/ggml-bin-musl-noavx-x64.so/libggml.so           deps/musl-noavx/libggml.so
@@ -721,24 +750,28 @@ jobs:
           cp artifacts/ggml-cpu-bin-musl-noavx-x64.so/libggml-cpu.so   deps/musl-noavx/libggml-cpu.so
           cp artifacts/llama-bin-musl-noavx-x64.so/libllama.so         deps/musl-noavx/libllama.so
           cp artifacts/mtmd-bin-musl-noavx-x64.so/libmtmd.so           deps/musl-noavx/libmtmd.so
+          cp artifacts/llama-jinja-bin-musl-noavx-x64.so/libllama-jinja.so deps/musl-noavx/libllama-jinja.so
 
           cp artifacts/ggml-bin-musl-avx-x64.so/libggml.so             deps/musl-avx/libggml.so
           cp artifacts/ggml-base-bin-musl-avx-x64.so/libggml-base.so   deps/musl-avx/libggml-base.so
           cp artifacts/ggml-cpu-bin-musl-avx-x64.so/libggml-cpu.so     deps/musl-avx/libggml-cpu.so
           cp artifacts/llama-bin-musl-avx-x64.so/libllama.so           deps/musl-avx/libllama.so
           cp artifacts/mtmd-bin-musl-avx-x64.so/libmtmd.so             deps/musl-avx/libmtmd.so
+          cp artifacts/llama-jinja-bin-musl-avx-x64.so/libllama-jinja.so deps/musl-avx/libllama-jinja.so
 
           cp artifacts/ggml-bin-musl-avx2-x64.so/libggml.so            deps/musl-avx2/libggml.so
           cp artifacts/ggml-base-bin-musl-avx2-x64.so/libggml-base.so  deps/musl-avx2/libggml-base.so
           cp artifacts/ggml-cpu-bin-musl-avx2-x64.so/libggml-cpu.so    deps/musl-avx2/libggml-cpu.so
           cp artifacts/llama-bin-musl-avx2-x64.so/libllama.so          deps/musl-avx2/libllama.so
           cp artifacts/mtmd-bin-musl-avx2-x64.so/libmtmd.so            deps/musl-avx2/libmtmd.so
+          cp artifacts/llama-jinja-bin-musl-avx2-x64.so/libllama-jinja.so deps/musl-avx2/libllama-jinja.so
 
           cp artifacts/ggml-bin-musl-avx512-x64.so/libggml.so           deps/musl-avx512/libggml.so
           cp artifacts/ggml-base-bin-musl-avx512-x64.so/libggml-base.so deps/musl-avx512/libggml-base.so
           cp artifacts/ggml-cpu-bin-musl-avx512-x64.so/libggml-cpu.so   deps/musl-avx512/libggml-cpu.so
           cp artifacts/llama-bin-musl-avx512-x64.so/libllama.so         deps/musl-avx512/libllama.so
           cp artifacts/mtmd-bin-musl-avx512-x64.so/libmtmd.so           deps/musl-avx512/libmtmd.so
+          cp artifacts/llama-jinja-bin-musl-avx512-x64.so/libllama-jinja.so deps/musl-avx512/libllama-jinja.so
 
           # Windows
           cp artifacts/ggml-bin-win-noavx-x64.dll/ggml.dll            deps/noavx/ggml.dll
@@ -746,24 +779,28 @@ jobs:
           cp artifacts/ggml-cpu-bin-win-noavx-x64.dll/ggml-cpu.dll    deps/noavx/ggml-cpu.dll
           cp artifacts/llama-bin-win-noavx-x64.dll/llama.dll          deps/noavx/llama.dll
           cp artifacts/mtmd-bin-win-noavx-x64.dll/mtmd.dll            deps/noavx/mtmd.dll
+          cp artifacts/llama-jinja-bin-win-noavx-x64.dll/llama-jinja.dll deps/noavx/llama-jinja.dll
 
           cp artifacts/ggml-bin-win-avx-x64.dll/ggml.dll           deps/avx/ggml.dll
           cp artifacts/ggml-base-bin-win-avx-x64.dll/ggml-base.dll deps/avx/ggml-base.dll
           cp artifacts/ggml-cpu-bin-win-avx-x64.dll/ggml-cpu.dll   deps/avx/ggml-cpu.dll
           cp artifacts/llama-bin-win-avx-x64.dll/llama.dll         deps/avx/llama.dll
           cp artifacts/mtmd-bin-win-avx-x64.dll/mtmd.dll           deps/avx/mtmd.dll
+          cp artifacts/llama-jinja-bin-win-avx-x64.dll/llama-jinja.dll deps/avx/llama-jinja.dll
 
           cp artifacts/ggml-bin-win-avx2-x64.dll/ggml.dll           deps/avx2/ggml.dll
           cp artifacts/ggml-base-bin-win-avx2-x64.dll/ggml-base.dll deps/avx2/ggml-base.dll
           cp artifacts/ggml-cpu-bin-win-avx2-x64.dll/ggml-cpu.dll   deps/avx2/ggml-cpu.dll
           cp artifacts/llama-bin-win-avx2-x64.dll/llama.dll         deps/avx2/llama.dll
           cp artifacts/mtmd-bin-win-avx2-x64.dll/mtmd.dll           deps/avx2/mtmd.dll
+          cp artifacts/llama-jinja-bin-win-avx2-x64.dll/llama-jinja.dll deps/avx2/llama-jinja.dll
 
           cp artifacts/ggml-bin-win-avx512-x64.dll/ggml.dll           deps/avx512/ggml.dll
           cp artifacts/ggml-base-bin-win-avx512-x64.dll/ggml-base.dll deps/avx512/ggml-base.dll
           cp artifacts/ggml-cpu-bin-win-avx512-x64.dll/ggml-cpu.dll   deps/avx512/ggml-cpu.dll
           cp artifacts/llama-bin-win-avx512-x64.dll/llama.dll         deps/avx512/llama.dll
           cp artifacts/mtmd-bin-win-avx512-x64.dll/mtmd.dll           deps/avx512/mtmd.dll
+          cp artifacts/llama-jinja-bin-win-avx512-x64.dll/llama-jinja.dll deps/avx512/llama-jinja.dll
 
           # Windows ARM64
           cp artifacts/ggml-bin-win-arm64-arm64.dll/ggml.dll           deps/win-arm64/ggml.dll
@@ -771,6 +808,7 @@ jobs:
           cp artifacts/ggml-cpu-bin-win-arm64-arm64.dll/ggml-cpu.dll   deps/win-arm64/ggml-cpu.dll
           cp artifacts/llama-bin-win-arm64-arm64.dll/llama.dll         deps/win-arm64/llama.dll
           cp artifacts/mtmd-bin-win-arm64-arm64.dll/mtmd.dll           deps/win-arm64/mtmd.dll
+          cp artifacts/llama-jinja-bin-win-arm64-arm64.dll/llama-jinja.dll deps/win-arm64/llama-jinja.dll
 
           # MacOS
           cp artifacts/ggml-bin-osx-arm64.dylib/libggml.dylib             deps/osx-arm64/libggml.dylib
@@ -780,12 +818,15 @@ jobs:
           cp artifacts/ggml-metal-bin-osx-arm64.dylib/libggml-metal.dylib deps/osx-arm64/libggml-metal.dylib
           cp artifacts/llama-bin-osx-arm64.dylib/libllama.dylib           deps/osx-arm64/libllama.dylib
           cp artifacts/mtmd-bin-osx-arm64.dylib/libmtmd.dylib             deps/osx-arm64/libmtmd.dylib
+          cp artifacts/llama-jinja-bin-osx-arm64.dylib/libllama-jinja.dylib deps/osx-arm64/libllama-jinja.dylib
+
           cp artifacts/ggml-bin-osx-x64.dylib/libggml.dylib             deps/osx-x64/libggml.dylib
           cp artifacts/ggml-base-bin-osx-x64.dylib/libggml-base.dylib   deps/osx-x64/libggml-base.dylib
           cp artifacts/ggml-cpu-bin-osx-x64.dylib/libggml-cpu.dylib     deps/osx-x64/libggml-cpu.dylib
           cp artifacts/ggml-blas-bin-osx-x64.dylib/libggml-blas.dylib   deps/osx-x64/libggml-blas.dylib
           cp artifacts/llama-bin-osx-x64.dylib/libllama.dylib           deps/osx-x64/libllama.dylib
           cp artifacts/mtmd-bin-osx-x64.dylib/libmtmd.dylib             deps/osx-x64/libmtmd.dylib
+          cp artifacts/llama-jinja-bin-osx-x64.dylib/libllama-jinja.dylib deps/osx-x64/libllama-jinja.dylib
 
           cp artifacts/ggml-bin-osx-x64-rosetta2.dylib/libggml.dylib           deps/osx-x64-rosetta2/libggml.dylib
           cp artifacts/ggml-base-bin-osx-x64-rosetta2.dylib/libggml-base.dylib deps/osx-x64-rosetta2/libggml-base.dylib
@@ -793,6 +834,7 @@ jobs:
           cp artifacts/ggml-blas-bin-osx-x64-rosetta2.dylib/libggml-blas.dylib deps/osx-x64-rosetta2/libggml-blas.dylib
           cp artifacts/llama-bin-osx-x64-rosetta2.dylib/libllama.dylib         deps/osx-x64-rosetta2/libllama.dylib
           cp artifacts/mtmd-bin-osx-x64-rosetta2.dylib/libmtmd.dylib           deps/osx-x64-rosetta2/libmtmd.dylib
+          cp artifacts/llama-jinja-bin-osx-x64-rosetta2.dylib/libllama-jinja.dylib deps/osx-x64-rosetta2/libllama-jinja.dylib
 
           # Android
           cp artifacts/ggml-bin-android-arm64-v8a.so/libggml.so               deps/android-arm64-v8a/libggml.so
