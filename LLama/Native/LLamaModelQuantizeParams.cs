@@ -80,19 +80,29 @@ namespace LLama.Native
         private sbyte _keep_split;
 
         /// <summary>
+        /// calculate and show the final quantization size without performing quantization
+        /// </summary>
+        public bool dry_run
+        {
+            get => Convert.ToBoolean(_dry_run);
+            set => _dry_run = Convert.ToSByte(value);
+        }
+        private sbyte _dry_run;
+
+        /// <summary>
         /// pointer to importance matrix data
         /// </summary>
         public IntPtr imatrix;
 
         /// <summary>
-        /// pointer to vector containing overrides
+        /// pointer to vector containing kv overrides
         /// </summary>
         public IntPtr kv_overrides;
 
         /// <summary>
-        /// pointer to vector containing tensor types
+        /// pointer to tensor type overrides
         /// </summary>
-        public IntPtr tensor_types;
+        public IntPtr tt_overrides;
 
         /// <summary>
         /// Pointer to vector containing layer indices to prune

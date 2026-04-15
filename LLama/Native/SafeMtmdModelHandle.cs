@@ -328,7 +328,8 @@ namespace LLama.Native
         /// <summary>
         /// Indicates whether the model decodes using the non-causal path.
         /// </summary>
-        public bool DecodeUseNonCausal() => NativeApi.mtmd_decode_use_non_causal(this);
+        /// <param name="chunk">Optional chunk; pass null to use the default image-chunk assumption.</param>
+        public bool DecodeUseNonCausal(IntPtr chunk = default) => NativeApi.mtmd_decode_use_non_causal(this, chunk);
 
         /// <summary>
         /// Indicates whether the model decodes using multi-scale RoPE.
@@ -346,9 +347,9 @@ namespace LLama.Native
         public bool SupportAudio() => NativeApi.mtmd_support_audio(this);
 
         /// <summary>
-        /// Gets the audio bitrate advertised by the model.
+        /// Gets the audio sample rate in Hz advertised by the model (e.g. 16000 for Whisper). Returns -1 if audio is not supported.
         /// </summary>
-        public int GetAudioBitrate() => NativeApi.mtmd_get_audio_bitrate(this);
+        public int GetAudioSampleRate() => NativeApi.mtmd_get_audio_sample_rate(this);
 
         private void EnsureNotDisposed()
         {

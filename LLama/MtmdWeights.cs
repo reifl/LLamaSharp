@@ -137,9 +137,9 @@ public sealed class MtmdWeights
     public bool UsesMRope => NativeHandle.DecodeUseMRope();
 
     /// <summary>
-    /// Gets the audio bitrate advertised by the model.
+    /// Gets the audio sample rate in Hz advertised by the model (e.g. 16000 for Whisper). Returns -1 if audio is not supported.
     /// </summary>
-    public int AudioBitrate => NativeHandle.GetAudioBitrate();
+    public int AudioSampleRate => NativeHandle.GetAudioSampleRate();
 
     /// <inheritdoc />
     public void Dispose() => NativeHandle.Dispose();

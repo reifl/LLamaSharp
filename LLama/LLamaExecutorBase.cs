@@ -342,7 +342,7 @@ namespace LLama
             SafeMtmdInputChunks? chunks = null;
             try
             {
-                var status = ClipModel.Tokenize(prompt, addBos, parseSpecial: true, out chunks);
+                var status = ClipModel.Tokenize(prompt, addBos, parseSpecial: true, Embeds.ToArray(), out chunks);
                 if (status != 0 || chunks is null)
                 {
                     ClipModel.ClearMedia();

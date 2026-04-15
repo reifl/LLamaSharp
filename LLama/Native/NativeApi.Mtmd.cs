@@ -43,7 +43,7 @@ public static partial class NativeApi
 
     [DllImport(mtmdLibraryName, EntryPoint = "mtmd_decode_use_non_causal", CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I1)]
-    internal static extern bool mtmd_decode_use_non_causal(SafeMtmdModelHandle ctx);
+    internal static extern bool mtmd_decode_use_non_causal(SafeMtmdModelHandle ctx, IntPtr chunk);
 
     [DllImport(mtmdLibraryName, EntryPoint = "mtmd_decode_use_mrope", CallingConvention = CallingConvention.Cdecl)]
     [return: MarshalAs(UnmanagedType.I1)]
@@ -57,8 +57,8 @@ public static partial class NativeApi
     [return: MarshalAs(UnmanagedType.I1)]
     internal static extern bool mtmd_support_audio(SafeMtmdModelHandle ctx);
 
-    [DllImport(mtmdLibraryName, EntryPoint = "mtmd_get_audio_bitrate", CallingConvention = CallingConvention.Cdecl)]
-    internal static extern int mtmd_get_audio_bitrate(SafeMtmdModelHandle ctx);
+    [DllImport(mtmdLibraryName, EntryPoint = "mtmd_get_audio_sample_rate", CallingConvention = CallingConvention.Cdecl)]
+    internal static extern int mtmd_get_audio_sample_rate(SafeMtmdModelHandle ctx);
 
     // bitmap ------------------------------------------------------------
 
@@ -154,10 +154,15 @@ public static partial class NativeApi
     internal static extern UIntPtr mtmd_image_tokens_get_n_tokens(IntPtr image_tokens);
 
     [DllImport(mtmdLibraryName, EntryPoint = "mtmd_image_tokens_get_nx", CallingConvention = CallingConvention.Cdecl)]
+    [Obsolete("use mtmd_image_tokens_get_decoder_pos instead")]
     internal static extern UIntPtr mtmd_image_tokens_get_nx(IntPtr image_tokens);
 
     [DllImport(mtmdLibraryName, EntryPoint = "mtmd_image_tokens_get_ny", CallingConvention = CallingConvention.Cdecl)]
+    [Obsolete("use mtmd_image_tokens_get_decoder_pos instead")]
     internal static extern UIntPtr mtmd_image_tokens_get_ny(IntPtr image_tokens);
+
+    [DllImport(mtmdLibraryName, EntryPoint = "mtmd_image_tokens_get_decoder_pos", CallingConvention = CallingConvention.Cdecl)]
+    internal static extern MtmdDecoderPos mtmd_image_tokens_get_decoder_pos(IntPtr image_tokens, UIntPtr i);
 
     [DllImport(mtmdLibraryName, EntryPoint = "mtmd_image_tokens_get_id", CallingConvention = CallingConvention.Cdecl)]
     internal static extern IntPtr mtmd_image_tokens_get_id(IntPtr image_tokens);
