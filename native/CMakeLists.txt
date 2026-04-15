@@ -4,6 +4,11 @@ project(llamasharp-native)
 # ── llama.cpp submodule ───────────────────────────────────────────────────────
 # All options passed on the cmake command line (GGML_NATIVE, BUILD_SHARED_LIBS,
 # GGML_CUDA, GGML_VULKAN, AVX flags, …) are forwarded automatically.
+#
+# Force the 'common' utility library to be built — it provides the Jinja2
+# template engine (common_chat_templates_apply) used by llama-jinja.
+set(LLAMA_BUILD_COMMON ON CACHE BOOL "" FORCE)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../llama.cpp llama_cpp_build)
 
 # ── llama-jinja ──────────────────────────────────────────────────────────────
